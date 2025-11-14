@@ -170,6 +170,7 @@ class SectionInfo(FeatureType):
         return raw_obj
 
     def process_raw_features(self, raw_obj):
+    
         sections = raw_obj['sections']
         general = [
             len(sections),  # total number of sections
@@ -182,23 +183,32 @@ class SectionInfo(FeatureType):
             # number of W
             sum(1 for s in sections if 'MEM_WRITE' in s['props'])
         ]
+        
         # gross characteristics of each section
         section_sizes = [(s['name'], s['size']) for s in sections]
         section_sizes_hashed = FeatureHasher(50, input_type="pair").transform([section_sizes]).toarray()[0]
+        
         section_entropy = [(s['name'], s['entropy']) for s in sections]
         section_entropy_hashed = FeatureHasher(50, input_type="pair").transform([section_entropy]).toarray()[0]
+        
         section_vsize = [(s['name'], s['vsize']) for s in sections]
         section_vsize_hashed = FeatureHasher(50, input_type="pair").transform([section_vsize]).toarray()[0]
-        entry_name_hashed = FeatureHasher(50, input_type="string").transform([raw_obj['entry']]).toarray()[0]
+        
+        entry_name_hashed = FeatureHasher(50, input_type="string").transform([[raw_obj['entry']]]).toarray()[0]
+        
         characteristics = [p for s in sections for p in s['props'] if s['name'] == raw_obj['entry']]
         characteristics_hashed = FeatureHasher(50, input_type="string").transform([characteristics]).toarray()[0]
 
         return np.hstack([
-            general, section_sizes_hashed, section_entropy_hashed, section_vsize_hashed, entry_name_hashed,
+            general, 
+            section_sizes_hashed, 
+            section_entropy_hashed, 
+            section_vsize_hashed, 
+            entry_name_hashed,
             characteristics_hashed
         ]).astype(np.float32)
-
-
+        
+        
 class ImportsInfo(FeatureType):
     ''' Information about imported libraries and functions from the
     import address table.  Note that the total number of imported
@@ -512,9 +522,9 @@ class PEFeatureExtractor(object):
         if os.path.exists(features_file):
             with open(features_file, encoding='utf8') as f:
                 x = json.load(f)
-                self.features = [features[feature] for feature in x['features'] if feature in features]
+                self.features: list[FeatureType] = [features[feature] for feature in x['features'] if feature in features]
         else:
-            self.features = list(features.values())
+            self.features: list[FeatureType] = list(features.values())
 
         if feature_version == 1:
             if not lief.__version__.startswith("0.8.3"):

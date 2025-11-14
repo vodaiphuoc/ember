@@ -23,7 +23,7 @@ def raw_feature_iterator(file_paths):
                 yield line
 
 
-def vectorize(irow, raw_features_string, X_path, y_path, extractor, nrows):
+def vectorize(irow, raw_features_string, X_path, y_path, extractor: PEFeatureExtractor, nrows):
     """
     Vectorize a single sample of raw features and write to a large numpy file
     """
@@ -61,22 +61,22 @@ def vectorize_subset(X_path, y_path, raw_feature_paths, extractor, nrows):
         pass
 
 
-def create_vectorized_features(data_dir, feature_version=2):
+def create_vectorized_features(data_dir, output_dir:str, feature_version=2):
     """
     Create feature vectors from raw features and write them to disk
     """
     extractor = PEFeatureExtractor(feature_version)
 
     print("Vectorizing training set")
-    X_path = os.path.join(data_dir, "X_train.dat")
-    y_path = os.path.join(data_dir, "y_train.dat")
+    X_path = os.path.join(output_dir, "X_train.dat")
+    y_path = os.path.join(output_dir, "y_train.dat")
     raw_feature_paths = [os.path.join(data_dir, "train_features_{}.jsonl".format(i)) for i in range(6)]
     nrows = sum([1 for fp in raw_feature_paths for line in open(fp)])
     vectorize_subset(X_path, y_path, raw_feature_paths, extractor, nrows)
 
     print("Vectorizing test set")
-    X_path = os.path.join(data_dir, "X_test.dat")
-    y_path = os.path.join(data_dir, "y_test.dat")
+    X_path = os.path.join(output_dir, "X_test.dat")
+    y_path = os.path.join(output_dir, "y_test.dat")
     raw_feature_paths = [os.path.join(data_dir, "test_features.jsonl")]
     nrows = sum([1 for fp in raw_feature_paths for line in open(fp)])
     vectorize_subset(X_path, y_path, raw_feature_paths, extractor, nrows)
